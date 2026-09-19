@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Company Name
+    |--------------------------------------------------------------------------
+    |
+    | This value is the name of the company running the application, shown in
+    | the header and other brand surfaces. It can be customized through the
+    | COMPANY_NAME environment variable.
+    |
+    */
+
+    'company_name' => env('COMPANY_NAME', 'Mi Hospedaje'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
