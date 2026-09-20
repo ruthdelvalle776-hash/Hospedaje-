@@ -1,5 +1,6 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import FlashMessage from '@/Components/FlashMessage';
 import Sidebar from '@/Components/Sidebar';
 import ThemeToggle from '@/Components/ThemeToggle';
 import { Link, usePage } from '@inertiajs/react';
@@ -114,6 +115,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 )}
 
                 <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                    <FlashMessage />
                     {children}
                 </main>
             </div>
