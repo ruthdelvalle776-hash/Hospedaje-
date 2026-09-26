@@ -5,9 +5,38 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reservation extends Model
 {
+    use SoftDeletes;
+
+    public const STATUS_PENDING = 'pendiente';
+
+    public const STATUS_CONFIRMED = 'confirmada';
+
+    public const STATUS_CHECK_IN = 'check-in';
+
+    public const STATUS_IN_HOUSE = 'en hospedaje';
+
+    public const STATUS_COMPLETED = 'finalizada';
+
+    public const STATUS_CANCELLED = 'cancelada';
+
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_CONFIRMED,
+        self::STATUS_CHECK_IN,
+        self::STATUS_IN_HOUSE,
+        self::STATUS_COMPLETED,
+        self::STATUS_CANCELLED,
+    ];
+
+    public const CANCELLABLE_STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_CONFIRMED,
+    ];
+
     protected $fillable = [
         'guest_id',
         'room_id',
@@ -43,5 +72,10 @@ class Reservation extends Model
     public function stay(): HasOne
     {
         return $this->hasOne(Stay::class);
+    }
+
+    public function isCancellable(): bool
+    {
+        return in_array($this->status, self::CANCELLABLE_STATUSES, true);
     }
 }
