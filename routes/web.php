@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RoomCategoryController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +37,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
     Route::resource('guests', GuestController::class)->except(['show']);
+
+    Route::resource('reservations', ReservationController::class)->except(['show']);
+    Route::patch('reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])
+        ->name('reservations.cancel');
 });
 
 require __DIR__.'/auth.php';
