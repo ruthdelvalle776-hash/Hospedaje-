@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomCategoryController;
 use App\Http\Controllers\RoomController;
@@ -32,6 +33,9 @@ Route::middleware('auth')->group(function () {
         ->name('room-categories.toggle');
 
     Route::resource('rooms', RoomController::class)->except(['show']);
+
+    Route::get('guests/search', [GuestController::class, 'search'])->name('guests.search');
+    Route::resource('guests', GuestController::class)->except(['show']);
 });
 
 require __DIR__.'/auth.php';
