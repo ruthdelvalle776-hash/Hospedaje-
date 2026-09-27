@@ -3,7 +3,7 @@ export const navigation = [
     { label: 'Categorías', route: 'room-categories.index' },
     { label: 'Habitaciones', route: 'rooms.index' },
     { label: 'Huéspedes', route: 'guests.index' },
-    { label: 'Reservas', route: null },
+    { label: 'Reservas', route: 'reservations.index' },
     { label: 'Disponibilidad', route: null },
     { label: 'Calendario', route: null },
     { label: 'Check-in', route: null },
