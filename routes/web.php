@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AvailabilityController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservationController;
@@ -41,6 +43,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('reservations', ReservationController::class)->except(['show']);
     Route::patch('reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])
         ->name('reservations.cancel');
+
+    Route::get('availability', [AvailabilityController::class, 'index'])->name('availability.index');
+    Route::get('availability/check', [AvailabilityController::class, 'check'])->name('availability.check');
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
 });
 
 require __DIR__.'/auth.php';
