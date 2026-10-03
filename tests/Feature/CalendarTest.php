@@ -19,7 +19,7 @@ class CalendarTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_calendar_returns_reservations_in_month(): void
+    public function test_calendar_returns_active_reservations(): void
     {
         $room = Room::factory()->create();
 
@@ -30,29 +30,25 @@ class CalendarTest extends TestCase
             'status' => 'confirmada',
         ]);
 
-        $response = $this->actingAs(User::factory()->create())
-            ->get('/calendar?month=2026-10');
+        $response = $this->actingAs(User::factory()->create())->get('/calendar');
 
         $response->assertOk()->assertInertia(fn ($page) => $page
             ->component('Calendar/Index', false)
             ->has('reservations', 1)
-            ->where('month.year', 2026)
-            ->where('month.month', 10));
+            ->has('rooms', 1));
     }
 
-    public function test_calendar_excludes_reservations_outside_month(): void
+    public function test_calendar_excludes_cancelled_reservations(): void
     {
         $room = Room::factory()->create();
 
-        Reservation::factory()->create([
+        Reservation::factory()->cancelled()->create([
             'room_id' => $room->id,
-            'check_in_date' => '2026-08-01',
-            'check_out_date' => '2026-08-05',
-            'status' => 'confirmada',
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-05',
         ]);
 
-        $response = $this->actingAs(User::factory()->create())
-            ->get('/calendar?month=2026-10');
+        $response = $this->actingAs(User::factory()->create())->get('/calendar');
 
         $response->assertOk()->assertInertia(fn ($page) => $page
             ->component('Calendar/Index', false)
