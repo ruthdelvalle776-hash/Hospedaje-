@@ -5,7 +5,7 @@ export const navigation = [
     { label: 'Huéspedes', route: 'guests.index' },
     { label: 'Reservas', route: 'reservations.index' },
     { label: 'Disponibilidad', route: 'availability.index' },
-    { label: 'Calendario', route: null },
+    { label: 'Calendario', route: 'calendar.index' },
     { label: 'Check-in', route: null },
     { label: 'Check-out', route: null },
     { label: 'Historial', route: null },
