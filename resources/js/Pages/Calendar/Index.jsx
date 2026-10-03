@@ -39,19 +39,40 @@ export default function Index({ rooms, reservations }) {
         return { year: now.getFullYear(), month: now.getMonth() + 1 };
     });
 
-    const events = reservations.map((reservation) => ({
-        id: reservation.id,
-        title: reservation.guest,
-        start: reservation.check_in_date,
-        end: reservation.check_out_date,
-        allDay: true,
-        extendedProps: { status: reservation.status },
-    }));
+    const events = reservations.flatMap((reservation) => [
+        {
+            id: reservation.id,
+            title: `↓ ${reservation.guest}`,
+            start: reservation.check_in_date,
+            end: reservation.check_out_date,
+            allDay: true,
+            extendedProps: {
+                status: reservation.status,
+                reservationId: reservation.id,
+            },
+        },
+        {
+            id: `checkout-${reservation.id}`,
+            title: `↑ ${reservation.guest}`,
+            start: reservation.check_out_date,
+            allDay: true,
+            extendedProps: {
+                isCheckout: true,
+                reservationId: reservation.id,
+            },
+        },
+    ]);
 
     const { year, month } = visibleMonth;
     const daysInMonth = new Date(year, month, 0).getDate();
     const prefix = `${year}-${pad(month)}-`;
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    const monthStart = `${prefix}01`;
+    const monthEndExclusive =
+        month === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${pad(month + 1)}-01`;
 
     const dayNumInMonth = (date) =>
         date.startsWith(prefix) ? Number(date.slice(8, 10)) : null;
@@ -62,15 +83,18 @@ export default function Index({ rooms, reservations }) {
     });
 
     reservations.forEach((reservation) => {
-        const inDay = dayNumInMonth(reservation.check_in_date);
-        const outDay = dayNumInMonth(reservation.check_out_date);
+        const inDate = reservation.check_in_date;
+        const outDate = reservation.check_out_date;
+
+        if (outDate <= monthStart || inDate >= monthEndExclusive) {
+            return;
+        }
+
+        const inDay = dayNumInMonth(inDate);
+        const outDay = dayNumInMonth(outDate);
 
         const start = inDay ?? 1;
         const end = (outDay ?? daysInMonth + 1) - 1;
-
-        if (end < start) {
-            return;
-        }
 
         for (let day = start; day <= end; day++) {
             let kind = 'stay';
@@ -110,20 +134,19 @@ export default function Index({ rooms, reservations }) {
                         right: '',
                     }}
                     eventClassNames={(arg) => [
-                        STATUS_CLASSES[arg.event.extendedProps.status] ??
-                            'fc-status-default',
+                        arg.event.extendedProps.isCheckout
+                            ? 'fc-event-checkout'
+                            : STATUS_CLASSES[
+                                  arg.event.extendedProps.status
+                              ] ?? 'fc-status-default',
                     ]}
-                    eventContent={(arg) => (
-                        <div className="flex items-center gap-1 overflow-hidden px-1.5 text-xs leading-5">
-                            {arg.isStart && (
-                                <span className="shrink-0">↓</span>
-                            )}
-                            <span className="truncate">{arg.event.title}</span>
-                            {arg.isEnd && <span className="shrink-0">↑</span>}
-                        </div>
-                    )}
                     eventClick={(info) =>
-                        router.visit(route('reservations.edit', info.event.id))
+                        router.visit(
+                            route(
+                                'reservations.edit',
+                                info.event.extendedProps.reservationId,
+                            ),
+                        )
                     }
                     datesSet={(arg) =>
                         setVisibleMonth({
