@@ -21,6 +21,25 @@
         --primary-foreground: 0 0% 100%;
         --destructive: 0 72% 51%;
         --destructive-foreground: 0 0% 100%;
+
+        --fc-border-color: hsl(var(--border));
+        --fc-page-bg-color: transparent;
+        --fc-today-bg-color: hsl(var(--accent));
+        --fc-neutral-bg-color: hsl(var(--muted));
+        --fc-neutral-text-color: hsl(var(--muted-foreground));
+        --fc-event-bg-color: hsl(var(--primary));
+        --fc-event-border-color: hsl(var(--primary));
+        --fc-event-text-color: hsl(var(--primary-foreground));
+        --fc-button-bg-color: hsl(var(--card));
+        --fc-button-border-color: hsl(var(--input));
+        --fc-button-text-color: hsl(var(--foreground));
+        --fc-button-hover-bg-color: hsl(var(--accent));
+        --fc-button-hover-border-color: hsl(var(--input));
+        --fc-button-hover-text-color: hsl(var(--foreground));
+        --fc-button-active-bg-color: hsl(var(--primary));
+        --fc-button-active-border-color: hsl(var(--primary));
+        --fc-button-active-text-color: hsl(var(--primary-foreground));
+        --fc-list-event-hover-bg-color: hsl(var(--accent));
     }
 
     .dark {
@@ -88,4 +107,40 @@
     .sidebar-link-active {
         @apply bg-accent text-accent-foreground;
     }
+}
+
+.fc .fc-status-pendiente {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: #1f2937;
+}
+
+.fc .fc-status-confirmada {
+    background-color: #10b981;
+    border-color: #10b981;
+    color: #ffffff;
+}
+
+.fc .fc-status-check-in {
+    background-color: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #ffffff;
+}
+
+.fc .fc-status-en-hospedaje {
+    background-color: #6366f1;
+    border-color: #6366f1;
+    color: #ffffff;
+}
+
+.fc .fc-status-finalizada {
+    background-color: #6b7280;
+    border-color: #6b7280;
+    color: #ffffff;
+}
+
+.fc .fc-status-cancelada {
+    background-color: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
 }
