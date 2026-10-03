@@ -4,7 +4,7 @@ export const navigation = [
     { label: 'Habitaciones', route: 'rooms.index' },
     { label: 'Huéspedes', route: 'guests.index' },
     { label: 'Reservas', route: 'reservations.index' },
-    { label: 'Disponibilidad', route: null },
+    { label: 'Disponibilidad', route: 'availability.index' },
     { label: 'Calendario', route: null },
     { label: 'Check-in', route: null },
     { label: 'Check-out', route: null },

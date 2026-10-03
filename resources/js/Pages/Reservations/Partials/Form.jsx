@@ -6,7 +6,7 @@ import TextInput from '@/Components/TextInput';
 import { MANAGEABLE_RESERVATION_STATUSES } from '@/Config/reservations';
 import { formatGs } from '@/Utils/format';
 import { useForm } from '@inertiajs/react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function toDateInput(value) {
     return value ? String(value).slice(0, 10) : '';
@@ -23,6 +23,38 @@ export default function ReservationForm({ reservation = null, rooms = [] }) {
         status: reservation?.status ?? 'pendiente',
         observations: reservation?.observations ?? '',
     });
+
+    const [occupiedRoomIds, setOccupiedRoomIds] = useState([]);
+
+    useEffect(() => {
+        const checkIn = data.check_in_date;
+        const checkOut = data.check_out_date;
+
+        if (!checkIn || !checkOut) {
+            setOccupiedRoomIds([]);
+
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            const params = { check_in_date: checkIn, check_out_date: checkOut };
+
+            if (reservation?.id) {
+                params.exclude = reservation.id;
+            }
+
+            const response = await fetch(route('availability.check', params), {
+                headers: { Accept: 'application/json' },
+            });
+
+            if (response.ok) {
+                const payload = await response.json();
+                setOccupiedRoomIds(payload.occupied_room_ids ?? []);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [data.check_in_date, data.check_out_date, reservation?.id]);
 
     const selectedRoom = rooms.find(
         (room) => room.id === Number(data.room_id),
@@ -92,14 +124,28 @@ export default function ReservationForm({ reservation = null, rooms = [] }) {
                     required
                 >
                     <option value="">Selecciona una habitación</option>
-                    {rooms.map((room) => (
-                        <option key={room.id} value={room.id}>
-                            {room.number} — {room.category?.name ?? 'Sin categoría'}
-                            {room.category
-                                ? ` (${room.category.capacity} pers.)`
-                                : ''}
-                        </option>
-                    ))}
+                    {rooms.map((room) => {
+                        const isCurrent =
+                            reservation?.room_id === Number(room.id);
+                        const isOccupied =
+                            occupiedRoomIds.includes(Number(room.id)) &&
+                            !isCurrent;
+
+                        return (
+                            <option
+                                key={room.id}
+                                value={room.id}
+                                disabled={isOccupied}
+                            >
+                                {room.number} —{' '}
+                                {room.category?.name ?? 'Sin categoría'}
+                                {room.category
+                                    ? ` (${room.category.capacity} pers.)`
+                                    : ''}
+                                {isOccupied ? ' — Ocupada' : ''}
+                            </option>
+                        );
+                    })}
                 </select>
 
                 <InputError message={errors.room_id} className="mt-2" />
