@@ -1,7 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import esLocale from '@fullcalendar/core/locales/es';
+import interactionPlugin from '@fullcalendar/interaction';
+import FullCalendar from '@fullcalendar/react';
 import { Head, router } from '@inertiajs/react';
-
-const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+import { useState } from 'react';
 
 const MONTHS = [
     'Enero',
@@ -18,11 +21,37 @@ const MONTHS = [
     'Diciembre',
 ];
 
+const STATUS_CLASSES = {
+    pendiente: 'fc-status-pendiente',
+    confirmada: 'fc-status-confirmada',
+    'check-in': 'fc-status-check-in',
+    'en hospedaje': 'fc-status-en-hospedaje',
+    finalizada: 'fc-status-finalizada',
+    cancelada: 'fc-status-cancelada',
+};
+
 const pad = (value) => String(value).padStart(2, '0');
 
-export default function Index({ month, rooms, reservations }) {
-    const prefix = `${month.year}-${pad(month.month)}-`;
-    const days = Array.from({ length: month.days }, (_, i) => i + 1);
+export default function Index({ rooms, reservations }) {
+    const [visibleMonth, setVisibleMonth] = useState(() => {
+        const now = new Date();
+
+        return { year: now.getFullYear(), month: now.getMonth() + 1 };
+    });
+
+    const events = reservations.map((reservation) => ({
+        id: reservation.id,
+        title: reservation.guest,
+        start: reservation.check_in_date,
+        end: reservation.check_out_date,
+        allDay: true,
+        extendedProps: { status: reservation.status },
+    }));
+
+    const { year, month } = visibleMonth;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const prefix = `${year}-${pad(month)}-`;
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
     const dayNumInMonth = (date) =>
         date.startsWith(prefix) ? Number(date.slice(8, 10)) : null;
@@ -37,7 +66,7 @@ export default function Index({ month, rooms, reservations }) {
         const outDay = dayNumInMonth(reservation.check_out_date);
 
         const start = inDay ?? 1;
-        const end = (outDay ?? month.days + 1) - 1;
+        const end = (outDay ?? daysInMonth + 1) - 1;
 
         if (end < start) {
             return;
@@ -59,13 +88,6 @@ export default function Index({ month, rooms, reservations }) {
         }
     });
 
-    const goTo = (value) =>
-        router.get(
-            route('calendar.index'),
-            { month: value },
-            { preserveState: true, preserveScroll: true },
-        );
-
     return (
         <AuthenticatedLayout
             header={
@@ -76,103 +98,57 @@ export default function Index({ month, rooms, reservations }) {
         >
             <Head title="Calendario" />
 
-            <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">
-                    {MONTHS[month.month - 1]} {month.year}
-                </h3>
-
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => goTo(month.prev)}
-                        className="btn-secondary px-3 py-1.5"
-                    >
-                        ← Anterior
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => goTo(month.next)}
-                        className="btn-secondary px-3 py-1.5"
-                    >
-                        Siguiente →
-                    </button>
-                </div>
+            <div className="card overflow-hidden p-2">
+                <FullCalendar
+                    plugins={[dayGridPlugin, interactionPlugin]}
+                    initialView="dayGridMonth"
+                    locale={esLocale}
+                    events={events}
+                    headerToolbar={{
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: '',
+                    }}
+                    eventClassNames={(arg) => [
+                        STATUS_CLASSES[arg.event.extendedProps.status] ??
+                            'fc-status-default',
+                    ]}
+                    eventContent={(arg) => (
+                        <div className="flex items-center gap-1 overflow-hidden px-1.5 text-xs leading-5">
+                            {arg.isStart && (
+                                <span className="shrink-0">↓</span>
+                            )}
+                            <span className="truncate">{arg.event.title}</span>
+                            {arg.isEnd && <span className="shrink-0">↑</span>}
+                        </div>
+                    )}
+                    eventClick={(info) =>
+                        router.visit(route('reservations.edit', info.event.id))
+                    }
+                    datesSet={(arg) =>
+                        setVisibleMonth({
+                            year: arg.view.currentStart.getFullYear(),
+                            month: arg.view.currentStart.getMonth() + 1,
+                        })
+                    }
+                    dayMaxEvents
+                    fixedWeekCount={false}
+                    height="auto"
+                />
             </div>
 
-            <div className="card mt-4 overflow-hidden">
-                <div className="border-b px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Llegadas y salidas
-                </div>
-
-                <div className="grid grid-cols-7 border-b bg-muted/30">
-                    {WEEKDAYS.map((weekday) => (
-                        <div
-                            key={weekday}
-                            className="px-2 py-2 text-center text-xs font-medium text-muted-foreground"
-                        >
-                            {weekday}
-                        </div>
-                    ))}
-                </div>
-
-                <div className="grid grid-cols-7">
-                    {Array.from({ length: month.first_weekday }).map((_, i) => (
-                        <div
-                            key={`empty-${i}`}
-                            className="min-h-20 border-b border-r"
-                        />
-                    ))}
-
-                    {days.map((day) => {
-                        const dayDate = `${prefix}${pad(day)}`;
-                        const arrivals = reservations.filter(
-                            (r) => r.check_in_date === dayDate,
-                        );
-                        const departures = reservations.filter(
-                            (r) => r.check_out_date === dayDate,
-                        );
-
-                        return (
-                            <div
-                                key={day}
-                                className="min-h-20 border-b border-r p-1.5 text-xs"
-                            >
-                                <div className="font-medium text-foreground">
-                                    {day}
-                                </div>
-
-                                {arrivals.map((reservation) => (
-                                    <div
-                                        key={`in-${reservation.id}`}
-                                        className="mt-0.5 truncate text-emerald-600 dark:text-emerald-400"
-                                        title={`Llegada: ${reservation.guest}`}
-                                    >
-                                        ↓ {reservation.guest}
-                                    </div>
-                                ))}
-
-                                {departures.map((reservation) => (
-                                    <div
-                                        key={`out-${reservation.id}`}
-                                        className="mt-0.5 truncate text-amber-600 dark:text-amber-400"
-                                        title={`Salida: ${reservation.guest}`}
-                                    >
-                                        ↑ {reservation.guest}
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    })}
-                </div>
+            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                <span>↓ llegada</span>
+                <span>↑ salida</span>
             </div>
 
             <div className="card mt-6 overflow-hidden">
                 <div className="border-b px-4 py-3 text-sm font-medium text-muted-foreground">
-                    Ocupación por habitación
+                    Ocupación por habitación — {MONTHS[month - 1]} {year}
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="min-w-full text-left text-sm">
+                    <table className="w-full border-collapse text-left text-sm">
                         <thead>
                             <tr>
                                 <th className="sticky left-0 z-10 bg-card px-3 py-2 font-medium text-muted-foreground">
@@ -181,17 +157,17 @@ export default function Index({ month, rooms, reservations }) {
                                 {days.map((day) => (
                                     <th
                                         key={day}
-                                        className="px-1 py-2 text-center text-xs font-medium text-muted-foreground"
+                                        className="min-w-6 px-1 py-2 text-center text-xs font-medium text-muted-foreground"
                                     >
                                         {day}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y">
+                        <tbody>
                             {rooms.map((room) => (
-                                <tr key={room.id}>
-                                    <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-3 py-2 font-medium text-foreground">
+                                <tr key={room.id} className="border-t">
+                                    <td className="sticky left-0 z-10 whitespace-nowrap bg-card px-3 py-1.5 font-medium text-foreground">
                                         {room.number}
                                         {room.category
                                             ? ` · ${room.category}`
@@ -203,7 +179,10 @@ export default function Index({ month, rooms, reservations }) {
 
                                         if (!cell) {
                                             return (
-                                                <td key={day} className="p-0.5" />
+                                                <td
+                                                    key={day}
+                                                    className="p-0.5"
+                                                />
                                             );
                                         }
 
