@@ -78,7 +78,7 @@ class GuestTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->component('Guests/Index', false)
+            ->component('Guests/Index')
             ->where('guests.total', 1));
     }
 
