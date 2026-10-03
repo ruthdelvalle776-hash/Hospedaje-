@@ -173,4 +173,131 @@ class ReservationTest extends TestCase
 
         $this->assertSoftDeleted('reservations', ['id' => $reservation->id]);
     }
+
+    public function test_reservation_rejects_overlapping_dates(): void
+    {
+        $room = $this->makeRoom();
+
+        Reservation::factory()->create([
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-05',
+            'status' => 'confirmada',
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->post('/reservations', [
+            'guest_id' => Guest::factory()->create()->id,
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-03',
+            'check_out_date' => '2026-10-07',
+            'number_of_people' => 2,
+            'price_per_person' => 100000,
+            'status' => 'pendiente',
+        ]);
+
+        $response->assertSessionHasErrors('check_out_date');
+    }
+
+    public function test_reservation_allows_back_to_back_dates(): void
+    {
+        $room = $this->makeRoom();
+
+        Reservation::factory()->create([
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-05',
+            'status' => 'confirmada',
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->post('/reservations', [
+            'guest_id' => Guest::factory()->create()->id,
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-05',
+            'check_out_date' => '2026-10-08',
+            'number_of_people' => 2,
+            'price_per_person' => 100000,
+            'status' => 'pendiente',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+    }
+
+    public function test_reservation_update_rejects_overlapping_dates(): void
+    {
+        $room = $this->makeRoom();
+
+        Reservation::factory()->create([
+            'room_id' => $room->id,
+            'check_in_date' => '2026-11-01',
+            'check_out_date' => '2026-11-10',
+            'status' => 'confirmada',
+        ]);
+
+        $reservation = Reservation::factory()->create([
+            'room_id' => $room->id,
+            'check_in_date' => '2026-12-01',
+            'check_out_date' => '2026-12-05',
+            'status' => 'pendiente',
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->put("/reservations/{$reservation->id}", [
+            'guest_id' => $reservation->guest_id,
+            'room_id' => $room->id,
+            'check_in_date' => '2026-11-05',
+            'check_out_date' => '2026-11-12',
+            'number_of_people' => 2,
+            'price_per_person' => 100000,
+            'status' => 'confirmada',
+        ]);
+
+        $response->assertSessionHasErrors('check_out_date');
+    }
+
+    public function test_reservation_update_does_not_conflict_with_itself(): void
+    {
+        $room = $this->makeRoom();
+
+        $reservation = Reservation::factory()->create([
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-05',
+            'number_of_people' => 2,
+            'status' => 'pendiente',
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->put("/reservations/{$reservation->id}", [
+            'guest_id' => $reservation->guest_id,
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-05',
+            'number_of_people' => 2,
+            'price_per_person' => 100000,
+            'status' => 'confirmada',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+    }
+
+    public function test_cancelled_reservation_does_not_block_availability(): void
+    {
+        $room = $this->makeRoom();
+
+        Reservation::factory()->cancelled()->create([
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-01',
+            'check_out_date' => '2026-10-05',
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->post('/reservations', [
+            'guest_id' => Guest::factory()->create()->id,
+            'room_id' => $room->id,
+            'check_in_date' => '2026-10-02',
+            'check_out_date' => '2026-10-06',
+            'number_of_people' => 2,
+            'price_per_person' => 100000,
+            'status' => 'pendiente',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+    }
 }

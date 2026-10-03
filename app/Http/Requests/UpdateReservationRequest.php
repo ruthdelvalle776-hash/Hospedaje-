@@ -22,7 +22,12 @@ class UpdateReservationRequest extends FormRequest
             'guest_id' => ['required', 'integer', Rule::exists('guests', 'id')],
             'room_id' => ['required', 'integer', Rule::exists('rooms', 'id')],
             'check_in_date' => ['required', 'date'],
-            'check_out_date' => ['required', 'date', 'after:check_in_date'],
+            'check_out_date' => [
+                'required',
+                'date',
+                'after:check_in_date',
+                $this->availabilityRule(),
+            ],
             'number_of_people' => [
                 'required',
                 'integer',
@@ -48,6 +53,41 @@ class UpdateReservationRequest extends FormRequest
 
             if ($room?->category && $value > $room->category->capacity) {
                 $fail("La cantidad de personas excede la capacidad de la habitación ({$room->category->capacity} personas).");
+            }
+        };
+    }
+
+    /**
+     * Validate that the room is available for the requested dates.
+     */
+    private function availabilityRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) {
+            $roomId = $this->input('room_id');
+            $checkIn = $this->input('check_in_date');
+            $checkOut = $value;
+
+            $checkInTimestamp = strtotime($checkIn);
+            $checkOutTimestamp = strtotime($checkOut);
+
+            if ($checkInTimestamp === false || $checkOutTimestamp === false) {
+                return;
+            }
+
+            if ($checkInTimestamp >= $checkOutTimestamp) {
+                return;
+            }
+
+            $overlap = Reservation::query()
+                ->where('room_id', $roomId)
+                ->where('status', '!=', Reservation::STATUS_CANCELLED)
+                ->whereDate('check_in_date', '<', $checkOut)
+                ->whereDate('check_out_date', '>', $checkIn)
+                ->when($this->route('reservation')?->id, fn ($query, $id) => $query->where('id', '!=', $id))
+                ->exists();
+
+            if ($overlap) {
+                $fail('La habitación ya tiene una reserva que se superpone en esas fechas.');
             }
         };
     }
