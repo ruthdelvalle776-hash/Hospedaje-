@@ -79,4 +79,9 @@ class Reservation extends Model
     {
         return in_array($this->status, self::CANCELLABLE_STATUSES, true);
     }
+
+    public function isCheckInable(): bool
+    {
+        return $this->status === self::STATUS_CONFIRMED;
+    }
 }

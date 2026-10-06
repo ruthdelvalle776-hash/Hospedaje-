@@ -43,6 +43,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('reservations', ReservationController::class)->except(['show']);
     Route::patch('reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])
         ->name('reservations.cancel');
+    Route::post('reservations/{reservation}/check-in', [ReservationController::class, 'checkIn'])
+        ->name('reservations.check-in');
 
     Route::get('availability', [AvailabilityController::class, 'index'])->name('availability.index');
     Route::get('availability/check', [AvailabilityController::class, 'check'])->name('availability.check');

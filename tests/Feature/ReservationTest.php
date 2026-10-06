@@ -300,4 +300,36 @@ class ReservationTest extends TestCase
 
         $response->assertSessionHasNoErrors();
     }
+
+    public function test_confirmed_reservation_can_be_checked_in(): void
+    {
+        $reservation = Reservation::factory()->confirmed()->create();
+        $room = $reservation->room;
+
+        $response = $this->actingAs(User::factory()->create())
+            ->post("/reservations/{$reservation->id}/check-in");
+
+        $response->assertSessionHas('success');
+
+        $this->assertSame('en hospedaje', $reservation->fresh()->status);
+        $this->assertSame('ocupada', $room->fresh()->status);
+        $this->assertDatabaseHas('stays', [
+            'reservation_id' => $reservation->id,
+        ]);
+    }
+
+    public function test_non_confirmed_reservation_cannot_be_checked_in(): void
+    {
+        $reservation = Reservation::factory()->create(['status' => 'pendiente']);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->post("/reservations/{$reservation->id}/check-in");
+
+        $response->assertSessionHas('error');
+
+        $this->assertSame('pendiente', $reservation->fresh()->status);
+        $this->assertDatabaseMissing('stays', [
+            'reservation_id' => $reservation->id,
+        ]);
+    }
 }

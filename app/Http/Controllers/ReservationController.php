@@ -6,9 +6,11 @@ use App\Http\Requests\StoreReservationRequest;
 use App\Http\Requests\UpdateReservationRequest;
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Models\Stay;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -116,6 +118,31 @@ class ReservationController extends Controller
 
         return Redirect::back()
             ->with('success', 'Reserva cancelada.');
+    }
+
+    /**
+     * Register the check-in for the reservation.
+     */
+    public function checkIn(Reservation $reservation): RedirectResponse
+    {
+        if (! $reservation->isCheckInable()) {
+            return Redirect::back()
+                ->with('error', 'Solo se puede registrar la entrada de una reserva confirmada.');
+        }
+
+        DB::transaction(function () use ($reservation) {
+            Stay::create([
+                'reservation_id' => $reservation->id,
+                'check_in_at' => now(),
+            ]);
+
+            $reservation->update(['status' => Reservation::STATUS_IN_HOUSE]);
+
+            $reservation->room()->update(['status' => 'ocupada']);
+        });
+
+        return Redirect::back()
+            ->with('success', 'Entrada registrada.');
     }
 
     /**

@@ -11,7 +11,7 @@ export const RESERVATION_STATUSES = [
     },
     {
         value: 'check-in',
-        label: 'Check-in',
+        label: 'Entrada',
         badge: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
     },
     {

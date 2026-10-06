@@ -175,6 +175,19 @@ export default function Index({ reservations, filters }) {
                                                     Cancelar
                                                 </Link>
                                             )}
+                                            {reservation.status === 'confirmada' && (
+                                                <Link
+                                                    href={route(
+                                                        'reservations.check-in',
+                                                        reservation.id,
+                                                    )}
+                                                    method="post"
+                                                    as="button"
+                                                    className="btn-primary px-3 py-1.5"
+                                                >
+                                                    Entrada
+                                                </Link>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() =>
