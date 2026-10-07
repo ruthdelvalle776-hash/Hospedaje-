@@ -60,6 +60,10 @@ class GuestController extends Controller
     {
         return Inertia::render('Guests/Edit', [
             'guest' => $guest,
+            'reservations' => $guest->reservations()
+                ->with('room.category')
+                ->orderByDesc('check_in_date')
+                ->get(),
         ]);
     }
 

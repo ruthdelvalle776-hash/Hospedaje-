@@ -6,6 +6,5 @@ export const navigation = [
     { label: 'Reservas', route: 'reservations.index' },
     { label: 'Disponibilidad', route: 'availability.index' },
     { label: 'Calendario', route: 'calendar.index' },
-    { label: 'Historial', route: null },
     { label: 'Recordatorios', route: null },
 ];

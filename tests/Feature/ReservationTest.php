@@ -332,4 +332,36 @@ class ReservationTest extends TestCase
             'reservation_id' => $reservation->id,
         ]);
     }
+
+    public function test_in_house_reservation_can_be_checked_out(): void
+    {
+        $reservation = Reservation::factory()->create(['status' => 'en hospedaje']);
+        $reservation->stay()->create(['check_in_at' => now()->subDay()]);
+        $room = $reservation->room;
+        $room->update(['status' => 'ocupada']);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->post("/reservations/{$reservation->id}/check-out");
+
+        $response->assertSessionHas('success');
+
+        $this->assertSame('finalizada', $reservation->fresh()->status);
+        $this->assertSame('disponible', $room->fresh()->status);
+        $this->assertNotNull($reservation->fresh()->stay->check_out_at);
+    }
+
+    public function test_non_in_house_reservation_cannot_be_checked_out(): void
+    {
+        $reservation = Reservation::factory()->create(['status' => 'confirmada']);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->post("/reservations/{$reservation->id}/check-out");
+
+        $response->assertSessionHas('error');
+
+        $this->assertSame('confirmada', $reservation->fresh()->status);
+        $this->assertDatabaseMissing('stays', [
+            'reservation_id' => $reservation->id,
+        ]);
+    }
 }

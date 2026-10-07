@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Guest;
+use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -102,5 +103,18 @@ class GuestTest extends TestCase
         $response->assertRedirect('/guests');
 
         $this->assertSoftDeleted('guests', ['id' => $guest->id]);
+    }
+
+    public function test_guest_edit_shows_reservation_history(): void
+    {
+        $guest = Guest::factory()->create();
+        Reservation::factory()->create(['guest_id' => $guest->id]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get("/guests/{$guest->id}/edit");
+
+        $response->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Guests/Edit')
+            ->has('reservations', 1));
     }
 }

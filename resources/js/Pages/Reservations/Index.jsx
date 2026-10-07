@@ -10,7 +10,7 @@ import {
     reservationStatusBadge,
     reservationStatusLabel,
 } from '@/Config/reservations';
-import { formatDate, formatGs } from '@/Utils/format';
+import { formatDate, formatDateTime, formatGs } from '@/Utils/format';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
@@ -122,6 +122,18 @@ export default function Index({ reservations, filters }) {
                                     <td className="px-4 py-3 font-medium text-foreground">
                                         {reservation.guest?.first_name}{' '}
                                         {reservation.guest?.last_name}
+                                        {reservation.stay?.check_in_at && (
+                                            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                                                {formatDateTime(
+                                                    reservation.stay.check_in_at,
+                                                )}
+                                                {reservation.stay.check_out_at &&
+                                                    ` → ${formatDateTime(
+                                                        reservation.stay
+                                                            .check_out_at,
+                                                    )}`}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3">
                                         {reservation.room?.number ?? '—'}
@@ -186,6 +198,19 @@ export default function Index({ reservations, filters }) {
                                                     className="btn-primary px-3 py-1.5"
                                                 >
                                                     Entrada
+                                                </Link>
+                                            )}
+                                            {reservation.status === 'en hospedaje' && (
+                                                <Link
+                                                    href={route(
+                                                        'reservations.check-out',
+                                                        reservation.id,
+                                                    )}
+                                                    method="post"
+                                                    as="button"
+                                                    className="btn-secondary px-3 py-1.5"
+                                                >
+                                                    Salida
                                                 </Link>
                                             )}
                                             <button

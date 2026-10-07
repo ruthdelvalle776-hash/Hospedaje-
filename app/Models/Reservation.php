@@ -84,4 +84,9 @@ class Reservation extends Model
     {
         return $this->status === self::STATUS_CONFIRMED;
     }
+
+    public function isCheckOutable(): bool
+    {
+        return $this->status === self::STATUS_IN_HOUSE;
+    }
 }

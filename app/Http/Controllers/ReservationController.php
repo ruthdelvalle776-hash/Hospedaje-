@@ -25,7 +25,7 @@ class ReservationController extends Controller
         $status = $request->query('status');
         $search = $request->query('search');
 
-        $reservations = Reservation::with(['guest', 'room.category'])
+        $reservations = Reservation::with(['guest', 'room.category', 'stay'])
             ->when($status, fn ($query, $status) => $query->where('status', $status))
             ->when($search, fn ($query, $search) => $query->whereHas(
                 'guest',
@@ -143,6 +143,31 @@ class ReservationController extends Controller
 
         return Redirect::back()
             ->with('success', 'Entrada registrada.');
+    }
+
+    /**
+     * Register the check-out for the reservation.
+     */
+    public function checkOut(Reservation $reservation): RedirectResponse
+    {
+        if (! $reservation->isCheckOutable()) {
+            return Redirect::back()
+                ->with('error', 'Solo se puede registrar la salida de una reserva en hospedaje.');
+        }
+
+        DB::transaction(function () use ($reservation) {
+            $reservation->stay()->updateOrCreate(
+                ['reservation_id' => $reservation->id],
+                ['check_out_at' => now()],
+            );
+
+            $reservation->update(['status' => Reservation::STATUS_COMPLETED]);
+
+            $reservation->room()->update(['status' => 'disponible']);
+        });
+
+        return Redirect::back()
+            ->with('success', 'Salida registrada.');
     }
 
     /**
