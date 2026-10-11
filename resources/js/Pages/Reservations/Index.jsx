@@ -31,10 +31,14 @@ export default function Index({ reservations, filters }) {
         });
     };
 
-    const applyFilters = ({ status = filters?.status ?? '', searchValue = search }) => {
+    const applyFilters = ({
+        status = filters?.status ?? '',
+        filter = filters?.filter ?? '',
+        searchValue = search,
+    }) => {
         router.get(
             route('reservations.index'),
-            { status, search: searchValue },
+            { status, filter, search: searchValue },
             { preserveState: true, preserveScroll: true, replace: true },
         );
     };
@@ -77,6 +81,17 @@ export default function Index({ reservations, filters }) {
                     placeholder="Buscar por huésped o documento..."
                     className="input block w-full sm:max-w-sm"
                 />
+
+                <select
+                    value={filters?.filter ?? ''}
+                    onChange={(e) => applyFilters({ filter: e.target.value })}
+                    className="input block w-full sm:w-48"
+                >
+                    <option value="">Sin filtro rápido</option>
+                    <option value="arrivals">Llegadas hoy</option>
+                    <option value="departures">Salidas hoy</option>
+                    <option value="upcoming">Próximas reservas</option>
+                </select>
 
                 <select
                     value={filters?.status ?? ''}

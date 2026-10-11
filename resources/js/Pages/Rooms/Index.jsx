@@ -4,16 +4,24 @@ import FlashMessage from '@/Components/FlashMessage';
 import Modal from '@/Components/Modal';
 import Pagination from '@/Components/Pagination';
 import SecondaryButton from '@/Components/SecondaryButton';
-import { roomStatusBadge, roomStatusLabel } from '@/Config/rooms';
+import { ROOM_STATUSES, roomStatusBadge, roomStatusLabel } from '@/Config/rooms';
 import { formatGs } from '@/Utils/format';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Index({ rooms }) {
+export default function Index({ rooms, filters }) {
     const [roomToDelete, setRoomToDelete] = useState(null);
     const { delete: destroy, processing } = useForm({});
 
     const closeModal = () => setRoomToDelete(null);
+
+    const applyStatusFilter = (status) => {
+        router.get(
+            route('rooms.index'),
+            { status },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
 
     const deleteRoom = (e) => {
         e.preventDefault();
@@ -43,6 +51,21 @@ export default function Index({ rooms }) {
                 <Link href={route('rooms.create')} className="btn-primary">
                     Nueva habitación
                 </Link>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <select
+                    value={filters?.status ?? ''}
+                    onChange={(e) => applyStatusFilter(e.target.value)}
+                    className="input block w-full sm:w-48"
+                >
+                    <option value="">Todos los estados</option>
+                    {ROOM_STATUSES.map((status) => (
+                        <option key={status.value} value={status.value}>
+                            {status.label}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             <div className="card mt-4 overflow-hidden">
