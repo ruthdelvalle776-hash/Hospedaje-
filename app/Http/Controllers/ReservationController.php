@@ -24,6 +24,7 @@ class ReservationController extends Controller
     {
         $status = $request->query('status');
         $search = $request->query('search');
+        $filter = $request->query('filter');
 
         $reservations = Reservation::with(['guest', 'room.category', 'stay'])
             ->when($status, fn ($query, $status) => $query->where('status', $status))
@@ -33,6 +34,22 @@ class ReservationController extends Controller
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('document_id', 'like', "%{$search}%"),
             ))
+            ->when($filter, function ($query, $filter) {
+                $today = Carbon::today();
+
+                return match ($filter) {
+                    'arrivals' => $query->whereDate('check_in_date', $today)
+                        ->where('status', '!=', Reservation::STATUS_CANCELLED),
+                    'departures' => $query->whereDate('check_out_date', $today)
+                        ->where('status', '!=', Reservation::STATUS_CANCELLED),
+                    'upcoming' => $query->whereDate('check_in_date', '>', $today)
+                        ->whereIn('status', [
+                            Reservation::STATUS_PENDING,
+                            Reservation::STATUS_CONFIRMED,
+                        ]),
+                    default => $query,
+                };
+            })
             ->orderByDesc('check_in_date')
             ->paginate(15)
             ->withQueryString();
@@ -42,6 +59,7 @@ class ReservationController extends Controller
             'filters' => [
                 'status' => $status,
                 'search' => $search,
+                'filter' => $filter,
             ],
         ]);
     }

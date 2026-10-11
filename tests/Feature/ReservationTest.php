@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomCategory;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -26,6 +27,72 @@ class ReservationTest extends TestCase
         $response = $this->actingAs(User::factory()->create())->get('/reservations');
 
         $response->assertOk();
+    }
+
+    public function test_reservations_can_be_filtered_by_arrivals(): void
+    {
+        $today = Carbon::today();
+
+        Reservation::factory()->confirmed()->create([
+            'check_in_date' => $today->toDateString(),
+            'check_out_date' => $today->copy()->addDays(2)->toDateString(),
+        ]);
+
+        Reservation::factory()->confirmed()->create([
+            'check_in_date' => $today->copy()->addDays(5)->toDateString(),
+            'check_out_date' => $today->copy()->addDays(7)->toDateString(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get('/reservations?filter=arrivals');
+
+        $response->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Reservations/Index')
+            ->where('reservations.total', 1));
+    }
+
+    public function test_reservations_can_be_filtered_by_departures(): void
+    {
+        $today = Carbon::today();
+
+        Reservation::factory()->confirmed()->create([
+            'check_in_date' => $today->copy()->subDays(2)->toDateString(),
+            'check_out_date' => $today->toDateString(),
+        ]);
+
+        Reservation::factory()->confirmed()->create([
+            'check_in_date' => $today->copy()->addDays(1)->toDateString(),
+            'check_out_date' => $today->copy()->addDays(3)->toDateString(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get('/reservations?filter=departures');
+
+        $response->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Reservations/Index')
+            ->where('reservations.total', 1));
+    }
+
+    public function test_reservations_can_be_filtered_by_upcoming(): void
+    {
+        $today = Carbon::today();
+
+        Reservation::factory()->confirmed()->create([
+            'check_in_date' => $today->copy()->addDays(3)->toDateString(),
+            'check_out_date' => $today->copy()->addDays(5)->toDateString(),
+        ]);
+
+        Reservation::factory()->confirmed()->create([
+            'check_in_date' => $today->copy()->subDays(3)->toDateString(),
+            'check_out_date' => $today->copy()->subDays(1)->toDateString(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get('/reservations?filter=upcoming');
+
+        $response->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Reservations/Index')
+            ->where('reservations.total', 1));
     }
 
     public function test_reservation_can_be_created(): void

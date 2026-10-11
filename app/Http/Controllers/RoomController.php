@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateRoomRequest;
 use App\Models\Room;
 use App\Models\RoomCategory;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,12 +17,19 @@ class RoomController extends Controller
     /**
      * Display a listing of the rooms.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $status = $request->query('status');
+
         return Inertia::render('Rooms/Index', [
             'rooms' => Room::with('category')
+                ->when($status, fn ($query) => $query->where('status', $status))
                 ->orderBy('number')
-                ->paginate(15),
+                ->paginate(15)
+                ->withQueryString(),
+            'filters' => [
+                'status' => $status,
+            ],
         ]);
     }
 

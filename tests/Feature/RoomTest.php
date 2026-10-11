@@ -19,6 +19,19 @@ class RoomTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_rooms_can_be_filtered_by_status(): void
+    {
+        Room::factory()->create(['status' => 'disponible']);
+        Room::factory()->create(['status' => 'ocupada']);
+
+        $response = $this->actingAs(User::factory()->create())
+            ->get('/rooms?status=ocupada');
+
+        $response->assertOk()->assertInertia(fn ($page) => $page
+            ->component('Rooms/Index')
+            ->where('rooms.total', 1));
+    }
+
     public function test_room_can_be_created(): void
     {
         $category = RoomCategory::factory()->create();
