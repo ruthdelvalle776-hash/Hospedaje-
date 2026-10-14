@@ -24,11 +24,11 @@ services:
       - hotels
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./docker/nginx
     container_name: hotels_nginx
     volumes:
       - .:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       php:
         condition: service_healthy
