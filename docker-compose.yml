@@ -14,7 +14,8 @@ services:
     depends_on:
       - mysql
     healthcheck:
-      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"]
+      test:
+        ["CMD-SHELL", 'php -r ''exit(@fsockopen("127.0.0.1", 9000) ? 0 : 1);''']
       interval: 5s
       timeout: 5s
       retries: 12
@@ -25,8 +26,6 @@ services:
   nginx:
     image: nginx:alpine
     container_name: hotels_nginx
-    ports:
-      - "8080:80"
     volumes:
       - .:/var/www/html
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
@@ -40,8 +39,6 @@ services:
     image: mysql:8.0
     container_name: hotels_mysql
     restart: unless-stopped
-    ports:
-      - "3307:3306"
     environment:
       MYSQL_DATABASE: hotels
       MYSQL_USER: hotels
@@ -59,9 +56,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - .:/var/www/html
-    command: ["npm", "run", "dev"]
-    ports:
-      - "5173:5173"
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
     networks:
       - hotels
 

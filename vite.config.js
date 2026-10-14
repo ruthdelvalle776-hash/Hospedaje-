@@ -11,11 +11,16 @@ export default defineConfig({
         react(),
     ],
     server: {
-        host: '0.0.0.0',
-        port: 5173,
-        strictPort: true,
-        hmr: {
-            host: 'localhost',
-        },
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
+    origin: 'https://hospedaje.daemon-lab.duckdns.org',
+    cors: true,
+    hmr: {
+      host: 'hospedaje.daemon-lab.duckdns.org',
+      protocol: 'wss',
+      clientPort: 443,
+      path: 'vite-hmr',
     },
+  },
 });
